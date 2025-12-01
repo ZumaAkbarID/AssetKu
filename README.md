@@ -9,7 +9,7 @@ AssetKu is an open-source personal asset tracking application designed to help y
 
 ## 📸 Screenshots
 
-![Dashboard Screenshot](placeholder-dashboard.png)
+![Dashboard Screenshot](public/dashboard.png)
 
 ## ✨ Features
 
