@@ -61,7 +61,7 @@ const AssetRow = ({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (asset: A
           </div>
         </div>
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-col md:flex-row items-center space-x-4 gap-y-2">
         <div className="text-right">
           <div className="font-semibold text-white">
             {formatCurrency(value)}
