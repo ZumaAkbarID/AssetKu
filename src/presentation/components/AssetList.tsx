@@ -14,20 +14,34 @@ const AssetRow = ({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (asset: A
   const pnlPercent = calculateAssetPnLPercent(asset);
   const isPositive = pnl >= 0;
 
-  // Icon/Color logic based on category or symbol
-  let iconBg = 'bg-gray-700';
+  // Icon/Color logic
+  const COLORS = [
+    'bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-yellow-500', 'bg-lime-500',
+    'bg-green-500', 'bg-emerald-500', 'bg-teal-500', 'bg-cyan-500', 'bg-sky-500',
+    'bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500',
+    'bg-pink-500', 'bg-rose-500'
+  ];
+
+  const getRandomColor = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % COLORS.length;
+    return COLORS[index];
+  };
+
+  let iconBg = getRandomColor(asset.id);
   let iconText = asset.symbol.substring(0, 2);
   
-  if (asset.category === 'Indo Stock') {
-    if (asset.symbol === 'BBCA') iconBg = 'bg-blue-600';
-    if (asset.symbol === 'TLKM') iconBg = 'bg-red-600';
-    if (asset.symbol === 'GOTO') iconBg = 'bg-green-600';
-  } else if (asset.category === 'US Stock') {
-    if (asset.symbol === 'AAPL') { iconBg = 'bg-gray-700'; iconText = '🍎'; }
-    if (asset.symbol === 'MSFT') { iconBg = 'bg-blue-500'; iconText = 'MS'; }
+  // Keep special icons but use random background (or maybe keep brand colors if preferred? User asked for random)
+  // Let's keep special ICONS but use the random background as requested.
+  if (asset.category === 'US Stock') {
+    if (asset.symbol === 'AAPL') { iconText = '🍎'; }
+    if (asset.symbol === 'MSFT') { iconText = 'MS'; }
   } else if (asset.category === 'Crypto') {
-    if (asset.symbol === 'BTC') { iconBg = 'bg-orange-500'; iconText = '₿'; }
-    if (asset.symbol === 'ETH') { iconBg = 'bg-indigo-500'; iconText = 'Ξ'; }
+    if (asset.symbol === 'BTC') { iconText = '₿'; }
+    if (asset.symbol === 'ETH') { iconText = 'Ξ'; }
   }
 
   const formatCurrency = (val: number) => {
@@ -53,7 +67,7 @@ const AssetRow = ({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (asset: A
             {formatCurrency(value)}
           </div>
           <div className={`text-sm ${isPositive ? 'text-green-400' : 'text-red-400'}`}>
-            {isPositive ? '+' : ''}{formatCurrency(pnl)} ({isPositive ? '+' : ''}{pnlPercent.toFixed(0)}%)
+            {isPositive ? '+' : ''}{formatCurrency(pnl)} ({isPositive ? '+' : ''}{pnlPercent.toFixed(2)}%)
           </div>
         </div>
         <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">

@@ -21,11 +21,16 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
 
   useEffect(() => {
     if (initialData) {
+      // Convert Shares to Lots for Indo Stock display
+      const quantity = initialData.category === 'Indo Stock' 
+        ? initialData.quantity / 100 
+        : initialData.quantity;
+
       setFormData({
         symbol: initialData.symbol,
         name: initialData.name,
         category: initialData.category,
-        quantity: initialData.quantity,
+        quantity: quantity,
         avgPrice: initialData.avgPrice,
         currentPrice: initialData.currentPrice,
         currency: initialData.currency,
@@ -43,14 +48,34 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
     }
   }, [initialData, isOpen]);
 
+  // Auto-set currency based on category
+  useEffect(() => {
+    if (formData.category === 'Indo Stock') {
+      setFormData(prev => ({ ...prev, currency: 'IDR' }));
+    } else if (formData.category === 'US Stock' || formData.category === 'Crypto') {
+      setFormData(prev => ({ ...prev, currency: 'USD' }));
+    }
+  }, [formData.category]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Convert Lots to Shares for Indo Stock submission
+    const finalQuantity = formData.category === 'Indo Stock' 
+      ? formData.quantity * 100 
+      : formData.quantity;
+
+    const submissionData = {
+      ...formData,
+      quantity: finalQuantity,
+    };
+
     if (initialData) {
-      onSubmit({ ...formData, id: initialData.id });
+      onSubmit({ ...submissionData, id: initialData.id });
     } else {
-      onSubmit(formData);
+      onSubmit(submissionData);
     }
     onClose();
   };
@@ -107,7 +132,9 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
           </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Quantity</label>
+              <label className="block text-sm text-gray-400 mb-1">
+                {formData.category === 'Indo Stock' ? 'Quantity (Lots)' : 'Quantity'}
+              </label>
               <input
                 type="number"
                 step="any"
