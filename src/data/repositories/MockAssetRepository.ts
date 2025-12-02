@@ -1,5 +1,5 @@
 import type { Asset } from '../../domain/entities/Asset';
-import type { AssetRepository, PortfolioHistoryPoint } from '../../domain/repositories/AssetRepository';
+import type { AssetRepository, PortfolioHistoryItem } from '../../domain/repositories/AssetRepository';
 
 export class MockAssetRepository implements AssetRepository {
   async getAssets(): Promise<Asset[]> {
@@ -77,21 +77,21 @@ export class MockAssetRepository implements AssetRepository {
     ];
   }
 
-  async getPortfolioHistory(range: string = 'ALL'): Promise<PortfolioHistoryPoint[]> {
+  async getPortfolioHistory(range: string = 'ALL'): Promise<PortfolioHistoryItem[]> {
     // Mock filtering logic
-    const allHistory = [
-      { date: 'Jan', value: 280000 },
-      { date: 'Feb', value: 295000 },
-      { date: 'Mar', value: 310000 },
-      { date: 'Apr', value: 305000 },
-      { date: 'May', value: 330000 },
-      { date: 'Jun', value: 345000 },
-      { date: 'Jul', value: 355000 },
-      { date: 'Aug', value: 360000 },
-      { date: 'Sep', value: 365000 },
-      { date: 'Oct', value: 370000 },
-      { date: 'Nov', value: 380000 },
-      { date: 'Dec', value: 387700 },
+    const allHistory: PortfolioHistoryItem[] = [
+      { id: '1', date: 'Jan', value: 280000, type: 'Snapshot', amount: 0 },
+      { id: '2', date: 'Feb', value: 295000, type: 'Snapshot', amount: 0 },
+      { id: '3', date: 'Mar', value: 310000, type: 'Snapshot', amount: 0 },
+      { id: '4', date: 'Apr', value: 305000, type: 'Snapshot', amount: 0 },
+      { id: '5', date: 'May', value: 330000, type: 'Snapshot', amount: 0 },
+      { id: '6', date: 'Jun', value: 345000, type: 'Snapshot', amount: 0 },
+      { id: '7', date: 'Jul', value: 355000, type: 'Snapshot', amount: 0 },
+      { id: '8', date: 'Aug', value: 360000, type: 'Snapshot', amount: 0 },
+      { id: '9', date: 'Sep', value: 365000, type: 'Snapshot', amount: 0 },
+      { id: '10', date: 'Oct', value: 370000, type: 'Snapshot', amount: 0 },
+      { id: '11', date: 'Nov', value: 380000, type: 'Snapshot', amount: 0 },
+      { id: '12', date: 'Dec', value: 387700, type: 'Snapshot', amount: 0 },
     ];
 
     if (range === 'YTD') {
@@ -114,5 +114,13 @@ export class MockAssetRepository implements AssetRepository {
 
   async addPortfolioHistory(value: number): Promise<void> {
     console.log('Mock add portfolio history:', value);
+  }
+
+  async addTransaction(type: any, amount: number, notes: string, assetId?: string): Promise<void> {
+    console.log('Mock add transaction:', { type, amount, notes, assetId });
+  }
+
+  async updateTransaction(id: string, type: any, amount: number, notes: string, assetId?: string): Promise<void> {
+    console.log('Mock update transaction:', { id, type, amount, notes, assetId });
   }
 }

@@ -1,4 +1,4 @@
-import type { AssetRepository, PortfolioHistoryPoint } from '../repositories/AssetRepository';
+import type { AssetRepository, PortfolioHistoryItem } from '../repositories/AssetRepository';
 
 export class GetPortfolioHistoryUseCase {
   private assetRepository: AssetRepository;
@@ -7,7 +7,7 @@ export class GetPortfolioHistoryUseCase {
     this.assetRepository = assetRepository;
   }
 
-  async execute(): Promise<PortfolioHistoryPoint[]> {
+  async execute(): Promise<PortfolioHistoryItem[]> {
     return this.assetRepository.getPortfolioHistory();
   }
 }

@@ -30,7 +30,7 @@ export const Dashboard = () => {
   
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
-  const [editingTransaction, setEditingTransaction] = useState<PortfolioHistoryItem | null>(null);
+  const [editingTransaction] = useState<PortfolioHistoryItem | null>(null);
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('ALL');
 
@@ -44,15 +44,7 @@ export const Dashboard = () => {
     setIsModalOpen(true);
   };
 
-  const handleAddTransaction = () => {
-    setEditingTransaction(null);
-    setIsTransactionModalOpen(true);
-  };
 
-  const handleEditTransaction = (transaction: PortfolioHistoryItem) => {
-    setEditingTransaction(transaction);
-    setIsTransactionModalOpen(true);
-  };
 
   const handleAddCashTransactionClick = (sourceId: string) => {
     setSelectedAccountId(sourceId);
@@ -99,7 +91,7 @@ export const Dashboard = () => {
   const cashHistory = history
     .filter(h => h.type === 'Snapshot')
     .map(h => {
-      const date = new Date(h.date); // Note: h.date is formatted string, might need parsing if format changes
+      // const date = new Date(h.date); // Note: h.date is formatted string, might need parsing if format changes
       // But for now, let's just use the current total balance for all points to show a flat line if no history logic
       // OR better: calculate running balance based on transactions up to that date.
       
