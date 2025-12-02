@@ -8,6 +8,8 @@ interface Props {
   onDelete: (id: string) => void;
 }
 
+const NON_UNIT_ASSETS = ['Obligasi', 'Reksadana Pasar Uang', 'SBN Retail', 'Obligasi FR'];
+
 const AssetRow = ({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (asset: Asset) => void; onDelete: (id: string) => void }) => {
   const value = convertToIDR(calculateAssetValue(asset), asset.currency);
   const pnl = convertToIDR(calculateAssetPnL(asset), asset.currency);
@@ -57,7 +59,10 @@ const AssetRow = ({ asset, onEdit, onDelete }: { asset: Asset; onEdit: (asset: A
         <div>
           <div className="font-semibold text-white">{asset.name}</div>
           <div className="text-sm text-gray-400">
-            {asset.symbol} • {asset.quantity.toLocaleString()} {asset.category === 'Crypto' ? '' : (asset.category === 'Indo Stock' ? 'Lots' : 'Shares')}
+            {asset.symbol}
+            {!NON_UNIT_ASSETS.includes(asset.category) && (
+              <> • {asset.quantity.toLocaleString()} {asset.category === 'Crypto' ? '' : (asset.category === 'Indo Stock' ? 'Lots' : 'Shares')}</>
+            )}
           </div>
         </div>
       </div>
@@ -87,6 +92,10 @@ export const AssetList = ({ assets, onEdit, onDelete }: Props) => {
   const indoStocks = assets.filter(a => a.category === 'Indo Stock');
   const usStocks = assets.filter(a => a.category === 'US Stock');
   const crypto = assets.filter(a => a.category === 'Crypto');
+  const obligasi = assets.filter(a => a.category === 'Obligasi');
+  const reksadana = assets.filter(a => a.category === 'Reksadana Pasar Uang');
+  const sbn = assets.filter(a => a.category === 'SBN Retail');
+  const obligasiFr = assets.filter(a => a.category === 'Obligasi FR');
 
   return (
     <div className="bg-gray-900 rounded-3xl p-6 shadow-2xl">
@@ -117,6 +126,42 @@ export const AssetList = ({ assets, onEdit, onDelete }: Props) => {
           <h3 className="text-orange-400 font-semibold mb-4 text-sm uppercase tracking-wide">Cryptocurrency</h3>
           <div className="space-y-3">
             {crypto.map(asset => <AssetRow key={asset.id} asset={asset} onEdit={onEdit} onDelete={onDelete} />)}
+          </div>
+        </div>
+      )}
+
+      {obligasi.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-orange-500 font-semibold mb-4 text-sm uppercase tracking-wide">Obligasi</h3>
+          <div className="space-y-3">
+            {obligasi.map(asset => <AssetRow key={asset.id} asset={asset} onEdit={onEdit} onDelete={onDelete} />)}
+          </div>
+        </div>
+      )}
+
+      {reksadana.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-lime-500 font-semibold mb-4 text-sm uppercase tracking-wide">Reksadana Pasar Uang</h3>
+          <div className="space-y-3">
+            {reksadana.map(asset => <AssetRow key={asset.id} asset={asset} onEdit={onEdit} onDelete={onDelete} />)}
+          </div>
+        </div>
+      )}
+
+      {sbn.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-cyan-500 font-semibold mb-4 text-sm uppercase tracking-wide">SBN Retail</h3>
+          <div className="space-y-3">
+            {sbn.map(asset => <AssetRow key={asset.id} asset={asset} onEdit={onEdit} onDelete={onDelete} />)}
+          </div>
+        </div>
+      )}
+
+      {obligasiFr.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-indigo-500 font-semibold mb-4 text-sm uppercase tracking-wide">Obligasi FR</h3>
+          <div className="space-y-3">
+            {obligasiFr.map(asset => <AssetRow key={asset.id} asset={asset} onEdit={onEdit} onDelete={onDelete} />)}
           </div>
         </div>
       )}

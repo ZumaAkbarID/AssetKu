@@ -8,6 +8,8 @@ interface Props {
   initialData?: Asset | null;
 }
 
+const NON_UNIT_ASSETS: AssetCategory[] = ['Obligasi', 'Reksadana Pasar Uang', 'SBN Retail', 'Obligasi FR'];
+
 export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props) => {
   const [formData, setFormData] = useState({
     symbol: '',
@@ -18,6 +20,9 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
     currentPrice: 0,
     currency: 'IDR' as Currency,
   });
+  const [pnlInput, setPnlInput] = useState(0);
+
+  const isNonUnit = NON_UNIT_ASSETS.includes(formData.category);
 
   useEffect(() => {
     if (initialData) {
@@ -35,6 +40,13 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
         currentPrice: initialData.currentPrice,
         currency: initialData.currency,
       });
+
+      // Set PnL input for non-unit assets
+      if (NON_UNIT_ASSETS.includes(initialData.category)) {
+        setPnlInput(initialData.currentPrice - initialData.avgPrice);
+      } else {
+        setPnlInput(0);
+      }
     } else {
       setFormData({
         symbol: '',
@@ -45,8 +57,20 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
         currentPrice: 0,
         currency: 'IDR',
       });
+      setPnlInput(0);
     }
   }, [initialData, isOpen]);
+
+  // Auto-calculate currentPrice for non-unit assets
+  useEffect(() => {
+    if (isNonUnit) {
+      setFormData(prev => ({
+        ...prev,
+        currentPrice: prev.avgPrice + pnlInput,
+        quantity: 1 // Force quantity to 1
+      }));
+    }
+  }, [pnlInput, formData.avgPrice, isNonUnit]);
 
   // Auto-set currency based on category
   useEffect(() => {
@@ -54,6 +78,9 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
       setFormData(prev => ({ ...prev, currency: 'IDR' }));
     } else if (formData.category === 'US Stock' || formData.category === 'Crypto') {
       setFormData(prev => ({ ...prev, currency: 'USD' }));
+    } else {
+      // Default to IDR for others (Obligasi, Reksadana, SBN, etc.)
+      setFormData(prev => ({ ...prev, currency: 'IDR' }));
     }
   }, [formData.category]);
 
@@ -116,6 +143,10 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
                 <option value="Indo Stock">Indo Stock</option>
                 <option value="US Stock">US Stock</option>
                 <option value="Crypto">Crypto</option>
+                <option value="Obligasi">Obligasi</option>
+                <option value="Reksadana Pasar Uang">Reksadana Pasar Uang</option>
+                <option value="SBN Retail">SBN Retail</option>
+                <option value="Obligasi FR">Obligasi FR</option>
               </select>
             </div>
             <div>
@@ -131,21 +162,25 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
             </div>
           </div>
           <div className="grid grid-cols-3 gap-4">
-            <div>
+            {!isNonUnit && (
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">
+                  {formData.category === 'Indo Stock' ? 'Quantity (Lots)' : 'Quantity'}
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-teal-500"
+                  value={formData.quantity}
+                  onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                />
+              </div>
+            )}
+            <div className={isNonUnit ? "col-span-1" : ""}>
               <label className="block text-sm text-gray-400 mb-1">
-                {formData.category === 'Indo Stock' ? 'Quantity (Lots)' : 'Quantity'}
+                {isNonUnit ? 'Modal Awal' : 'Avg Price'}
               </label>
-              <input
-                type="number"
-                step="any"
-                required
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-teal-500"
-                value={formData.quantity}
-                onChange={e => setFormData({ ...formData, quantity: Number(e.target.value) })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Avg Price</label>
               <input
                 type="number"
                 step="any"
@@ -155,15 +190,24 @@ export const AssetFormModal = ({ isOpen, onClose, onSubmit, initialData }: Props
                 onChange={e => setFormData({ ...formData, avgPrice: Number(e.target.value) })}
               />
             </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Current Price</label>
+            <div className={isNonUnit ? "col-span-2" : ""}>
+              <label className="block text-sm text-gray-400 mb-1">
+                {isNonUnit ? 'Keuntungan/Kerugian (+/-)' : 'Current Price'}
+              </label>
               <input
                 type="number"
                 step="any"
                 required
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-teal-500"
-                value={formData.currentPrice}
-                onChange={e => setFormData({ ...formData, currentPrice: Number(e.target.value) })}
+                value={isNonUnit ? pnlInput : formData.currentPrice}
+                onChange={e => {
+                  const val = Number(e.target.value);
+                  if (isNonUnit) {
+                    setPnlInput(val);
+                  } else {
+                    setFormData({ ...formData, currentPrice: val });
+                  }
+                }}
               />
             </div>
           </div>

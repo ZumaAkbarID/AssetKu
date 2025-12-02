@@ -62,6 +62,10 @@ export class GetAssetAllocationUseCase {
       if (category === 'Crypto') color = '#a855f7'; // purple-500
       if (category === 'Savings') color = '#3b82f6'; // blue-500
       if (category === 'RDN') color = '#ec4899'; // pink-500
+      if (category === 'Obligasi') color = '#f97316'; // orange-500
+      if (category === 'Reksadana Pasar Uang') color = '#84cc16'; // lime-500
+      if (category === 'SBN Retail') color = '#06b6d4'; // cyan-500
+      if (category === 'Obligasi FR') color = '#6366f1'; // indigo-500
 
       return {
         label: category,

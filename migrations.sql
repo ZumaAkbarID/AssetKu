@@ -13,7 +13,7 @@ CREATE TABLE public.assets (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   symbol text NOT NULL,
   name text NOT NULL,
-  category text NOT NULL CHECK (category = ANY (ARRAY['Indo Stock'::text, 'US Stock'::text, 'Crypto'::text])),
+  category text NOT NULL CHECK (category = ANY (ARRAY['Indo Stock'::text, 'US Stock'::text, 'Crypto'::text, 'Obligasi'::text, 'Reksadana Pasar Uang'::text, 'SBN Retail'::text, 'Obligasi FR'::text])),
   quantity numeric NOT NULL,
   avg_price numeric NOT NULL,
   current_price numeric NOT NULL,
