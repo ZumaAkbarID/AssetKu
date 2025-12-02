@@ -9,14 +9,28 @@ import { DateRangeFilter } from '../components/DateRangeFilter';
 import { CalendarWidget } from '../components/CalendarWidget';
 import { DeleteConfirmationModal } from '../components/DeleteConfirmationModal';
 import { PWAInstallButton } from '../components/PWAInstallButton';
+import { TransactionModal } from '../components/TransactionModal';
+import { CashAccountList } from '../components/CashAccountList';
+import { AddAccountModal } from '../components/AddAccountModal';
+import { AddCashTransactionModal } from '../components/AddCashTransactionModal';
+import { useCashAccounts } from '../hooks/useCashAccounts';
 import { getLocalTimeGreeting } from '../../domain/utils/DateUtils';
 import type { Asset } from '../../domain/entities/Asset';
+import type { PortfolioHistoryItem, TransactionType } from '../../domain/repositories/AssetRepository';
 
 export const Dashboard = () => {
-  const { assets, summary, allocation, history, loading, addAsset, updateAsset, deleteAsset, filterHistory } = usePortfolio();
+  const { assets, summary, allocation, history, loading, addAsset, updateAsset, deleteAsset, filterHistory, addTransaction, updateTransaction } = usePortfolio();
+  const { accounts, transactions: cashTransactions, addAccount, addTransaction: addCashTransaction } = useCashAccounts();
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false);
+  const [isAddAccountModalOpen, setIsAddAccountModalOpen] = useState(false);
+  const [isAddCashTransactionModalOpen, setIsAddCashTransactionModalOpen] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('');
+  
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  const [editingTransaction, setEditingTransaction] = useState<PortfolioHistoryItem | null>(null);
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('ALL');
 
@@ -28,6 +42,21 @@ export const Dashboard = () => {
   const handleEditAsset = (asset: Asset) => {
     setEditingAsset(asset);
     setIsModalOpen(true);
+  };
+
+  const handleAddTransaction = () => {
+    setEditingTransaction(null);
+    setIsTransactionModalOpen(true);
+  };
+
+  const handleEditTransaction = (transaction: PortfolioHistoryItem) => {
+    setEditingTransaction(transaction);
+    setIsTransactionModalOpen(true);
+  };
+
+  const handleAddCashTransactionClick = (sourceId: string) => {
+    setSelectedAccountId(sourceId);
+    setIsAddCashTransactionModalOpen(true);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -51,10 +80,56 @@ export const Dashboard = () => {
     }
   };
 
+  const handleSaveTransaction = async (type: TransactionType, amount: number, notes: string, assetId?: string) => {
+    if (editingTransaction) {
+      await updateTransaction(editingTransaction.id, type, amount, notes, assetId);
+    } else {
+      await addTransaction(type, amount, notes, assetId);
+    }
+  };
+
   const handleRangeChange = (range: string) => {
     setDateRange(range);
     filterHistory(range);
   };
+
+  // Calculate Cash History
+  // This is a simplified calculation. Ideally, we should have a daily snapshot of cash balance.
+  // For now, we'll map the portfolio history dates to the cumulative cash balance at that date.
+  const cashHistory = history
+    .filter(h => h.type === 'Snapshot')
+    .map(h => {
+      const date = new Date(h.date); // Note: h.date is formatted string, might need parsing if format changes
+      // But for now, let's just use the current total balance for all points to show a flat line if no history logic
+      // OR better: calculate running balance based on transactions up to that date.
+      
+      // Since h.date is "MMM D, HH:mm", parsing it back might be tricky without year.
+      // Let's try a simpler approach: Just show the current total cash balance as a flat line for reference,
+      // or try to reconstruct history if possible.
+      
+      // Reconstructing history:
+      // 1. Get all transactions.
+      // 2. Filter transactions before 'date'.
+      // 3. Sum them up.
+      
+      // Issue: h.date doesn't have year. We might need the raw date from history if available, but it's not.
+      // Let's assume the current year for simplicity or just use the total balance for now as a baseline.
+      
+      // BETTER APPROACH:
+      // Create a map of date -> balance.
+      // Since we don't have historical snapshots for cash, we can only show the *current* balance 
+      // or try to project it back if we assume transactions are the only source of truth.
+      
+      // Let's implement a simple running balance calculation based on the visible history dates.
+      // We will assume the history points are sorted.
+      
+      // Actually, to be accurate, we need to know the balance at each point in time.
+      // Let's just calculate the total current balance and show it as a reference line for now, 
+      // as reconstructing exact daily history without stored snapshots is complex and error-prone with just formatted dates.
+      
+      const totalCash = cashTransactions.reduce((acc, t) => t.type === 'Income' ? acc + t.amount : acc - t.amount, 0);
+      return { date: h.date, value: totalCash };
+    });
 
   if (loading) {
     return <div className="min-h-screen bg-gray-950 text-white flex items-center justify-center">Loading...</div>;
@@ -111,10 +186,65 @@ export const Dashboard = () => {
                 <DateRangeFilter currentRange={dateRange} onRangeChange={handleRangeChange} />
               </div>
               <div className="h-72">
-                <PortfolioChart history={history} />
+                <PortfolioChart 
+                  history={history.filter(h => h.type === 'Snapshot')} 
+                  cashHistory={cashHistory}
+                />
               </div>
             </div>
             <AssetList assets={assets} onEdit={handleEditAsset} onDelete={handleDeleteClick} />
+            
+            <div className="flex justify-end">
+               <button
+                onClick={() => setIsAddAccountModalOpen(true)}
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-sm transition-colors"
+              >
+                + Add Account
+              </button>
+            </div>
+            <CashAccountList 
+              accounts={accounts} 
+              transactions={cashTransactions} 
+              onAddTransaction={handleAddCashTransactionClick} 
+            />
+            
+            {/* Transaction History */}
+            <div className="bg-gray-900 rounded-3xl p-6 shadow-2xl">
+              <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
+              <div className="space-y-4">
+                {cashTransactions.length === 0 ? (
+                  <p className="text-gray-400 text-center py-4">No transactions found</p>
+                ) : (
+                  cashTransactions.map(item => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between items-center p-4 bg-gray-800 rounded-xl hover:bg-gray-750 transition-colors"
+                    >
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 rounded text-xs font-bold ${item.type === 'Income' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                            {item.type}
+                          </span>
+                          <span className="text-gray-400 text-sm">{item.date}</span>
+                        </div>
+                        {item.notes && <p className="text-gray-300 mt-1">{item.notes}</p>}
+                        {item.performer && (
+                          <p className="text-gray-500 text-xs mt-1">
+                            By: {item.performer}
+                          </p>
+                        )}
+                        <p className="text-gray-500 text-xs mt-1">
+                          Account: {accounts.find(a => a.id === item.sourceId)?.name || 'Unknown'}
+                        </p>
+                      </div>
+                      <div className={`font-bold ${item.type === 'Income' ? 'text-green-400' : 'text-red-400'}`}>
+                        {item.type === 'Income' ? '+' : '-'} Rp {item.amount.toLocaleString('id-ID')}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Right Column */}
@@ -169,6 +299,28 @@ export const Dashboard = () => {
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleConfirmDelete}
+      />
+
+      <TransactionModal
+        isOpen={isTransactionModalOpen}
+        onClose={() => setIsTransactionModalOpen(false)}
+        onSubmit={handleSaveTransaction}
+        initialData={editingTransaction}
+        assets={assets}
+      />
+
+      <AddAccountModal
+        isOpen={isAddAccountModalOpen}
+        onClose={() => setIsAddAccountModalOpen(false)}
+        onSubmit={addAccount}
+      />
+
+      <AddCashTransactionModal
+        isOpen={isAddCashTransactionModalOpen}
+        onClose={() => setIsAddCashTransactionModalOpen(false)}
+        onSubmit={addCashTransaction}
+        accounts={accounts}
+        initialSourceId={selectedAccountId}
       />
     </div>
   );

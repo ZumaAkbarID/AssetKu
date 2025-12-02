@@ -10,7 +10,7 @@ import {
   Tooltip,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
-import type { PortfolioHistoryPoint } from '../../domain/repositories/AssetRepository';
+import type { PortfolioHistoryItem } from '../../domain/repositories/AssetRepository';
 
 ChartJS.register(
   CategoryScale,
@@ -24,10 +24,11 @@ ChartJS.register(
 );
 
 interface Props {
-  history: PortfolioHistoryPoint[];
+  history: PortfolioHistoryItem[];
+  cashHistory?: { date: string; value: number }[];
 }
 
-export const PortfolioChart = ({ history }: Props) => {
+export const PortfolioChart = ({ history, cashHistory = [] }: Props) => {
   const data = {
     labels: history.map(h => h.date),
     datasets: [
@@ -36,6 +37,17 @@ export const PortfolioChart = ({ history }: Props) => {
         data: history.map(h => h.value),
         borderColor: '#2dd4bf',
         backgroundColor: 'rgba(45, 212, 191, 0.1)',
+        tension: 0.4,
+        fill: true,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        borderWidth: 3,
+      },
+      {
+        label: 'Cash Balance',
+        data: cashHistory.map(h => h.value),
+        borderColor: '#a855f7', // Purple
+        backgroundColor: 'rgba(168, 85, 247, 0.1)',
         tension: 0.4,
         fill: true,
         pointRadius: 0,

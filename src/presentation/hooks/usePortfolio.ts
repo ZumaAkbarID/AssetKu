@@ -8,18 +8,20 @@ import {
   getPortfolioHistoryUseCase,
   getPortfolioSummaryUseCase,
   updateAssetUseCase,
+  addTransactionUseCase,
+  updateTransactionUseCase,
 } from '../../di/container';
 import { fetchExchangeRate } from '../../domain/utils/CurrencyConverter';
 import type { Asset } from '../../domain/entities/Asset';
 import type { PortfolioSummary } from '../../domain/entities/PortfolioSummary';
 import type { Allocation } from '../../domain/entities/Allocation';
-import type { PortfolioHistoryPoint } from '../../domain/repositories/AssetRepository';
+import type { PortfolioHistoryItem, TransactionType } from '../../domain/repositories/AssetRepository';
 
 export const usePortfolio = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [summary, setSummary] = useState<PortfolioSummary | null>(null);
   const [allocation, setAllocation] = useState<Allocation[]>([]);
-  const [history, setHistory] = useState<PortfolioHistoryPoint[]>([]);
+  const [history, setHistory] = useState<PortfolioHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const initialized = useRef(false);
@@ -76,6 +78,16 @@ export const usePortfolio = () => {
     setHistory(historyData);
   };
 
+  const addTransaction = async (type: TransactionType, amount: number, notes: string, assetId?: string) => {
+    await addTransactionUseCase.execute(type, amount, notes, assetId);
+    await fetchData();
+  };
+
+  const updateTransaction = async (id: string, type: TransactionType, amount: number, notes: string, assetId?: string) => {
+    await updateTransactionUseCase.execute(id, type, amount, notes, assetId);
+    await fetchData();
+  };
+
   return {
     assets,
     summary,
@@ -86,6 +98,8 @@ export const usePortfolio = () => {
     updateAsset,
     deleteAsset,
     filterHistory,
+    addTransaction,
+    updateTransaction,
     fetchData
   };
 };

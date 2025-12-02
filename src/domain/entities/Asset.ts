@@ -1,4 +1,4 @@
-export type AssetCategory = 'Indo Stock' | 'US Stock' | 'Crypto';
+export type AssetCategory = 'Indo Stock' | 'US Stock' | 'Crypto' | 'Savings' | 'RDN';
 export type Currency = 'USD' | 'IDR';
 
 export interface Asset {

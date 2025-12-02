@@ -1,6 +1,6 @@
 import { supabase } from '../sources/supabase';
 import type { Asset } from '../../domain/entities/Asset';
-import type { AssetRepository, PortfolioHistoryPoint } from '../../domain/repositories/AssetRepository';
+import type { AssetRepository, PortfolioHistoryItem, TransactionType } from '../../domain/repositories/AssetRepository';
 import { getLocalISOString } from '../../domain/utils/DateUtils';
 
 export class SupabaseAssetRepository implements AssetRepository {
@@ -23,7 +23,7 @@ export class SupabaseAssetRepository implements AssetRepository {
     }));
   }
 
-  async getPortfolioHistory(range: string = 'ALL'): Promise<PortfolioHistoryPoint[]> {
+  async getPortfolioHistory(range: string = 'ALL'): Promise<PortfolioHistoryItem[]> {
     const { data: maxDateData } = await supabase
       .from('portfolio_history')
       .select('date')
@@ -71,6 +71,7 @@ export class SupabaseAssetRepository implements AssetRepository {
     return data.map((item: any) => {
       const dateObj = new Date(item.created_at || item.date);
       return {
+        id: item.id,
         date: dateObj.toLocaleString('en-US', {
           month: 'short',
           day: 'numeric',
@@ -79,6 +80,10 @@ export class SupabaseAssetRepository implements AssetRepository {
           hour12: false
         }),
         value: Number(item.value),
+        type: item.type || 'Snapshot',
+        amount: item.amount ? Number(item.amount) : undefined,
+        notes: item.notes,
+        assetId: item.asset_id,
       };
     });
   }
@@ -124,6 +129,30 @@ export class SupabaseAssetRepository implements AssetRepository {
     const { error } = await supabase
       .from('portfolio_history')
       .insert({ date, value });
+
+    if (error) throw error;
+  }
+  async addTransaction(type: TransactionType, amount: number, notes: string, assetId?: string): Promise<void> {
+    const date = getLocalISOString();
+    const { error } = await supabase.from('portfolio_history').insert({
+      date,
+      value: 0, // Value is required but not used for transactions
+      type,
+      amount,
+      notes,
+      asset_id: assetId || null,
+    });
+
+    if (error) throw error;
+  }
+
+  async updateTransaction(id: string, type: TransactionType, amount: number, notes: string, assetId?: string): Promise<void> {
+    const { error } = await supabase.from('portfolio_history').update({
+      type,
+      amount,
+      notes,
+      asset_id: assetId || null,
+    }).eq('id', id);
 
     if (error) throw error;
   }
